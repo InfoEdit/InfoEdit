@@ -1,0 +1,26 @@
+# Core: Gemini / Vertex AI batch prediction
+google-genai>=1.0.0
+google-cloud-aiplatform>=1.60.0
+google-cloud-storage>=2.14.0
+gcsfs>=2024.2.0
+
+# OpenAI (GPT-Image-2 editing path)
+openai>=1.40.0
+
+# Data / IO
+pydantic>=2.0
+tqdm
+pandas
+numpy
+
+# HTML -> PNG rendering
+playwright>=1.40.0
+beautifulsoup4
+
+# PPTX handling
+python-pptx>=0.6.23
+pdf2image
+
+# Figures
+matplotlib>=3.7
+squarify

@@ -1,0 +1,35 @@
+InfoEdit benchmark data — Creative Commons Attribution 4.0 International
+(CC BY 4.0)
+
+Copyright (c) 2026 The InfoEdit Authors
+
+This license applies to the InfoEdit *benchmark data*: the 1,000 infographics
+(HTML/PPTX sources and rendered images), the 4,000 editing instructions, and
+the accompanying metadata and annotations. The source code in this repository
+is licensed separately under the MIT License (see LICENSE).
+
+You are free to:
+
+  Share  — copy and redistribute the material in any medium or format
+  Adapt  — remix, transform, and build upon the material for any purpose,
+           even commercially
+
+Under the following term:
+
+  Attribution — You must give appropriate credit, provide a link to the
+  license, and indicate if changes were made. You may do so in any reasonable
+  manner, but not in any way that suggests the licensor endorses you or your
+  use.
+
+Full legal text: https://creativecommons.org/licenses/by/4.0/legalcode
+
+When using this data, please cite:
+
+  @inproceedings{yang2026infoedit,
+    title     = {InfoEdit: Probing Global Layout Reasoning in Infographic Editing},
+    author    = {Yang, Cheng and Shi, Chufan and Wang, Huijuan and Shui, Bo and
+                 Wu, Yaokang and Tao, Muzi and Yan, Yibo and Ma, Xuezhe and
+                 Berg-Kirkpatrick, Taylor},
+    booktitle = {Proceedings of EMNLP},
+    year      = {2026}
+  }

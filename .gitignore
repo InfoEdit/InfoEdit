@@ -1,0 +1,32 @@
+# ============================================================
+# Benchmark data — distributed via HuggingFace Datasets, not git
+# ============================================================
+data/
+
+# Model outputs / experiment artifacts
+edited_html_infographics*/
+edited_ppt_infographics*/
+eval_results/
+batch_image_edit_output/
+augmented_data/
+logs/
+tmp/
+
+# Local credentials / per-machine environment
+env.sh
+env_*.sh
+.env
+*.key
+service-account*.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
