@@ -30,8 +30,11 @@ from datetime import datetime
 from pathlib import Path
 
 from PIL import Image
-from google import genai
-from google.genai import types
+try:                      # Vertex-only; unused on the openai-proxy branch
+    from google import genai
+    from google.genai import types
+except ImportError:       # pragma: no cover
+    genai = types = None
 from pptx import Presentation
 from pptx.dml.color import RGBColor
 from pptx.enum.shapes import MSO_SHAPE, MSO_SHAPE_TYPE
@@ -42,6 +45,12 @@ try:
     import wandb
 except ImportError:   # optional: only needed when W&B logging is enabled
     wandb = None
+
+# Reach llm_client.py at the repo root.
+import sys as _sys, pathlib as _pl
+_sys.path.insert(0, str(_pl.Path(__file__).resolve().parents[3]))
+from llm_client import chat_text
+
 
 DEFAULT_MODEL_PATH = "gemini-3.1-pro-preview"
 NUM_VARIANTS = 1
@@ -578,31 +587,14 @@ def process_edits(
                 edited_code = ""
                 for attempt in range(max_retries):
                     try:
-                        client = random.choice(clients)
-                        contents = [user_prompt, source_image] if source_image is not None else [user_prompt]
-                        response = client.models.generate_content(
-                            model=model_path,
-                            contents=contents,
-                            config=types.GenerateContentConfig(
-                                system_instruction=EDIT_SYSTEM_INSTRUCTION,
-                                thinking_config=_thinking_config(model_path),
-                            ),
+                        resp_code = chat_text(
+                            model_path,
+                            user_prompt,
+                            images=[source_image] if source_image is not None else None,
+                            system=EDIT_SYSTEM_INSTRUCTION,
                         )
-
-                        resp_code = ""
+                        # The proxy exposes no separate reasoning stream.
                         resp_thoughts = []
-                        parts_list = []
-                        if hasattr(response, "candidates") and response.candidates:
-                            parts_list = response.candidates[0].content.parts or []
-                        for part in parts_list:
-                            if not (hasattr(part, "text") and part.text):
-                                continue
-                            if getattr(part, "thought", False):
-                                resp_thoughts.append(part.text)
-                            else:
-                                resp_code += part.text
-                        if not resp_code and hasattr(response, "text") and response.text:
-                            resp_code = response.text
 
                         resp_code = clean_python_output(resp_code)
                         if resp_code:
@@ -676,7 +668,7 @@ def _worker_entry(
     master_pptx, id_mapping, result_queue, input_mode,
 ):
     try:
-        clients = [genai.Client(api_key=key, vertexai=True) for key in api_keys]
+        clients = [None]  # unused: llm_client holds the proxy client
         success, fail = process_edits(
             clients=clients,
             model_path=model_path,
@@ -1408,6 +1400,11 @@ def main():
         print(f"  - [{op}] {len(plan['data'])} tasks | in={plan['input_file']} | out={plan['output_dir']}/")
     print(f"Variants:    {NUM_VARIANTS}")
     if args.use_batch and not args.render_only:
+        raise SystemExit(
+            "--use_batch is a Vertex AI feature and is not available on the "
+            "openai-proxy branch. Drop --use_batch and raise --num_workers "
+            "instead; requests then go to the proxy concurrently."
+        )
         print(f"GCP Project:  {args.gcp_project}")
         print(f"GCP Location: {args.gcp_location}")
         print(f"Bucket URI:   {args.batch_bucket_uri}")
@@ -1465,7 +1462,7 @@ def main():
                     input_mode=args.input_mode,
                 )
             else:
-                clients = [genai.Client(api_key=key) for key in args.api_keys]
+                clients = [None]  # unused: llm_client holds the proxy client
                 s, f = process_edits(
                     clients=clients,
                     model_path=args.model_path,

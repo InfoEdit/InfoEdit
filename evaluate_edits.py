@@ -9,11 +9,16 @@ import multiprocessing as mp
 from datetime import datetime
 from tqdm import tqdm
 from PIL import Image
-from google import genai
+try:                      # Vertex-only; unused on the openai-proxy branch
+    from google import genai
+except ImportError:       # pragma: no cover
+    genai = None
 try:
     import wandb
 except ImportError:   # optional: only needed when W&B logging is enabled
     wandb = None
+
+from llm_client import chat_text
 
 DEFAULT_MODEL_PATH = "gemini-3.1-flash-lite-preview"
 
@@ -685,17 +690,11 @@ def evaluate_shard(clients, model_path, data_list, edited_dir, shard_output_file
                 api_success = False
                 for attempt in range(max_retries):
                     try:
-                        client = random.choice(clients)
-                        response = client.models.generate_content(
-                            model=model_path,
-                            contents=[prompt, original_image, edited_image],
+                        response_text = chat_text(
+                            model_path,
+                            prompt,
+                            images=[original_image, edited_image],
                         )
-
-                        response_text = ""
-                        if response.candidates and response.candidates[0].content.parts:
-                            for part in response.candidates[0].content.parts:
-                                if part.text:
-                                    response_text += part.text
 
                         if not response_text.strip():
                             tqdm.write(f"[Warning] ID {item_id} V{var_idx}: Empty response, retrying ({attempt + 1}/{max_retries})...")
@@ -743,7 +742,7 @@ def evaluate_shard(clients, model_path, data_list, edited_dir, shard_output_file
 
 def _worker_entry(worker_id, api_keys, model_path, data_shard, edited_dir, shard_output_file, done_keys, operation, result_queue, detailed=False):
     try:
-        clients = [genai.Client(api_key=key) for key in api_keys]
+        clients = [None]  # unused: llm_client holds the proxy client
         success, fail, skip = evaluate_shard(
             clients=clients,
             model_path=model_path,
@@ -1565,6 +1564,11 @@ def main():
         print(f"  - [{op}] {len(plan['data'])} tasks | edited={plan['edited_dir']}/ | out={plan['output_file']}")
     print(f"Prompt Index: {args.prompt_index}")
     if args.use_batch:
+        raise SystemExit(
+            "--use_batch is a Vertex AI feature and is not available on the "
+            "openai-proxy branch. Drop --use_batch and raise --num_workers "
+            "instead; requests then go to the proxy concurrently."
+        )
         print(f"GCP Project:   {args.gcp_project}")
         print(f"GCP Location:  {args.gcp_location}")
         print(f"Bucket URI:    {args.batch_bucket_uri}")
@@ -1634,7 +1638,7 @@ def main():
                 detailed=args.detailed,
             )
         else:
-            clients = [genai.Client(api_key=key, vertexai=True) for key in args.api_keys]
+            clients = [None]  # unused: llm_client holds the proxy client
             s, f, sk = evaluate_shard(
                 clients=clients,
                 model_path=args.model_path,
