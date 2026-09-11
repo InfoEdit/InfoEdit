@@ -23,12 +23,20 @@ rate and the best code-level system **61.6%**; most editors fall below **7%**.
 
 ```bash
 pip install -r requirements.txt
+playwright install chromium   # renders edited HTML back to PNG
 
-cp env.example.sh env.sh    # fill in your GCP project
+# fetch the benchmark (~612 MB) into data/
+huggingface-cli download InfoEdit/InfoEdit --repo-type dataset --local-dir data
+
+cp env.example.sh env.sh      # fill in your GCP project
 source env.sh
 
-bash quickstart.sh          # edit + score 5 examples end-to-end
+bash quickstart.sh            # edit + score 5 examples end-to-end
 ```
+
+The PPT code-level path additionally renders slides through LibreOffice
+(`brew install --cask libreoffice`, or `apt-get install libreoffice`); every other
+path works without it.
 
 Then run the real thing — two steps, one model at a time:
 
@@ -56,8 +64,15 @@ Task names map to the paper as: `text_expand`→Expand-Text, `add`→Insert-Elem
 
 ## Data
 
-The benchmark data is released via HuggingFace Datasets and is **not** tracked in git.
-Download it into this directory so the layout is:
+The benchmark lives on the Hugging Face Hub at
+[InfoEdit/InfoEdit](https://huggingface.co/datasets/InfoEdit/InfoEdit) and is **not**
+tracked in git:
+
+```bash
+huggingface-cli download InfoEdit/InfoEdit --repo-type dataset --local-dir data
+```
+
+which gives you:
 
 ```
 data/

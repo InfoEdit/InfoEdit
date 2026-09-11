@@ -7,6 +7,9 @@ gcsfs>=2024.2.0
 # OpenAI (GPT-Image-2 editing path)
 openai>=1.40.0
 
+# Dataset download from the Hugging Face Hub
+huggingface_hub>=0.26
+
 # Data / IO
 pydantic>=2.0
 tqdm
