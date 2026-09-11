@@ -19,26 +19,73 @@ adapt. We call this global layout reasoning ability **reflow**, and InfoEdit mea
 Across eight frontier editors, the best pixel-level model reaches **62.0%** average success
 rate and the best code-level system **61.6%**; most editors fall below **7%**.
 
-## Quick start
+## What you need first
+
+* **Python 3.10+**
+* **A Google Cloud project with billing enabled.** Editing and judging both run as
+  [Vertex AI batch prediction](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/batch-prediction)
+  jobs — roughly half the price of online calls, but they do require a real GCP project.
+* **The `gcloud` CLI** ([install](https://cloud.google.com/sdk/docs/install)).
+
+Optional, per backend:
+
+| you want to run | you also need |
+|---|---|
+| code-level on HTML | `playwright install chromium` |
+| code-level on PPT | LibreOffice **and** poppler |
+| GPT-Image-2 | `OPENAI_API_KEY` |
+| Seedream | `ARK_API_KEY` (Volcengine) |
+| Qwen / Hunyuan | a CUDA GPU box; see `baselines/pixel/{qwen,hunyuan}/run.sh` |
+
+## Install
 
 ```bash
+git clone https://github.com/InfoEdit/InfoEdit.git && cd InfoEdit
 pip install -r requirements.txt
-playwright install chromium   # renders edited HTML back to PNG
+playwright install chromium        # HTML code-level path renders with Chromium
 
-# fetch the benchmark (~612 MB) into data/
-huggingface-cli download InfoEdit/InfoEdit --repo-type dataset --local-dir data
-
-cp env.example.sh env.sh      # fill in your GCP project
-source env.sh
-
-bash quickstart.sh            # edit + score 5 examples end-to-end
+# only for the PPT code-level path:
+#   macOS          brew install --cask libreoffice poppler
+#   Debian/Ubuntu  apt-get install libreoffice poppler-utils
 ```
 
-The PPT code-level path additionally renders slides through LibreOffice
-(`brew install --cask libreoffice`, or `apt-get install libreoffice`); every other
-path works without it.
+## Configure Google Cloud
 
-Then run the real thing — two steps, one model at a time:
+```bash
+export GCP_PROJECT=your-project-id
+
+# 1. authenticate (this is what the Python SDK uses)
+gcloud auth application-default login
+gcloud auth application-default set-quota-project $GCP_PROJECT
+
+# 2. enable the APIs
+gcloud services enable aiplatform.googleapis.com storage.googleapis.com --project $GCP_PROJECT
+
+# 3. create the staging bucket batch jobs read and write through.
+#    It must be a SINGLE region (us-central1), not the multi-region "us".
+gcloud storage buckets create gs://${GCP_PROJECT}-batch-io --location=us-central1
+
+# 4. record it for the run scripts
+cp env.example.sh env.sh     # set GCP_PROJECT inside
+source env.sh
+```
+
+## Get the benchmark
+
+```bash
+huggingface-cli download InfoEdit/InfoEdit --repo-type dataset --local-dir data
+```
+
+## Run it
+
+```bash
+bash quickstart.sh      # 5 examples, edit + score, end to end
+```
+
+Batch jobs sit in a queue before they start, so even five examples usually take a few
+minutes — a run that prints `JOB_STATE_QUEUED` for a while is working, not stuck.
+
+Then the real thing, two steps per model:
 
 ```bash
 # 1. produce edits
@@ -48,31 +95,31 @@ MODEL=gemini-2.5-flash-image TASK=add bash run_edit.sh
 MODEL=gemini-2.5-flash-image TASK=add bash run_eval.sh
 ```
 
+Edits land in `edited_<source>_infographics[_code]/<version>/<model>/<task>/`, per-example
+judgements in `eval_results/<model>/`, and `run_eval.sh` prints the EC / CP / SR table at
+the end.
+
 Both scripts read the same environment variables:
 
 | var | values | default |
 |---|---|---|
-| `MODEL` | any editor model id | *required* |
+| `MODEL` | editor model id, e.g. `gemini-2.5-flash-image`, `gemini-3.5-flash` | *required* |
 | `TASK` | `text_expand` · `add` · `swap_inter` · `aspect_ratio` | `text_expand` |
 | `SOURCE` | `html` (800) · `ppt` (200) | `html` |
 | `PATHWAY` | `image` · `code` · `code_image` · `gpt` · `seedream` | `image` |
 | `LIMIT` | number of examples, empty = all | all |
 | `JUDGE` | judge model | `gemini-3.1-pro-preview` |
 
-Task names map to the paper as: `text_expand`→Expand-Text, `add`→Insert-Element,
-`swap_inter`→Swap-Block, `aspect_ratio`→Reshape-Canvas.
+`PATHWAY=image` uses Gemini image models; `code` / `code_image` edit the HTML or PPTX
+source (`code_image` also shows the model the rendered original). Task names map to the
+paper as: `text_expand`→Expand-Text, `add`→Insert-Element, `swap_inter`→Swap-Block,
+`aspect_ratio`→Reshape-Canvas.
 
 ## Data
 
 The benchmark lives on the Hugging Face Hub at
 [InfoEdit/InfoEdit](https://huggingface.co/datasets/InfoEdit/InfoEdit) and is **not**
-tracked in git:
-
-```bash
-huggingface-cli download InfoEdit/InfoEdit --repo-type dataset --local-dir data
-```
-
-which gives you:
+tracked in git. The download above gives you:
 
 ```
 data/
@@ -136,10 +183,6 @@ baselines/                  editor backends, grouped by the two pathways the
 This release covers the two experiments reported in the main tables: **pixel-level**
 editing (Table 2) and **code-level** editing (Table 3). The dataset itself is
 distributed via HuggingFace, so no dataset-construction code is included.
-
-Editing and judging run as **Vertex AI batch prediction** jobs (~50% cheaper than online
-calls). You need a GCP project with `aiplatform.googleapis.com` enabled and a
-single-region (`us-central1`) staging bucket — `env.example.sh` documents the setup.
 
 ## License
 

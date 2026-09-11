@@ -12,5 +12,8 @@ export GCP_LOCATION=global
 #   gcloud storage buckets create gs://${GCP_PROJECT}-batch-io --location=us-central1
 export BATCH_BUCKET_URI=gs://${GCP_PROJECT}-batch-io
 
-# Optional: OpenAI key, only needed for the GPT-Image-2 editing scripts.
+# Optional, per backend:
+#   GPT-Image-2 (baselines/pixel/gpt)
 # export OPENAI_API_KEY=sk-...
+#   Seedream via Volcengine Ark (baselines/pixel/seedream)
+# export ARK_API_KEY=...
