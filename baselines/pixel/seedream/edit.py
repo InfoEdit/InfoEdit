@@ -42,7 +42,10 @@ from datetime import datetime
 import requests
 from tqdm import tqdm
 from PIL import Image
-import wandb
+try:
+    import wandb
+except ImportError:   # optional: only needed when W&B logging is enabled
+    wandb = None
 
 
 ARK_ENDPOINT = "https://ark.cn-beijing.volces.com/api/v3/images/generations"
@@ -500,6 +503,10 @@ def main():
     print("Edited images saved:")
     for op, plan in per_op_plan.items():
         print(f"  - [{op}] {plan['output_dir']}/")
+
+    if not args.no_wandb and wandb is None:
+
+        raise SystemExit("W&B logging requested but wandb is not installed — pip install wandb, or pass --no_wandb.")
 
     if not args.no_wandb:
         upload_to_wandb(args, per_op_plan, total_tasks, total_success, total_fail)

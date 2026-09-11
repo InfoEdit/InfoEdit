@@ -21,7 +21,10 @@ from tqdm import tqdm
 from PIL import Image
 from google import genai
 from google.genai import types
-import wandb
+try:
+    import wandb
+except ImportError:   # optional: only needed when W&B logging is enabled
+    wandb = None
 
 DEFAULT_MODEL_PATH = "gemini-3.1-pro-preview"
 NUM_VARIANTS = 1

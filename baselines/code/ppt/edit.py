@@ -38,7 +38,10 @@ from pptx.enum.shapes import MSO_SHAPE, MSO_SHAPE_TYPE
 from pptx.enum.text import PP_ALIGN
 from pptx.util import Cm, Emu, Inches, Pt
 from tqdm import tqdm
-import wandb
+try:
+    import wandb
+except ImportError:   # optional: only needed when W&B logging is enabled
+    wandb = None
 
 DEFAULT_MODEL_PATH = "gemini-3.1-pro-preview"
 NUM_VARIANTS = 1

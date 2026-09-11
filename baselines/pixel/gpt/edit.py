@@ -39,7 +39,10 @@ from datetime import datetime
 from tqdm import tqdm
 from PIL import Image
 from openai import OpenAI
-import wandb
+try:
+    import wandb
+except ImportError:   # optional: only needed when W&B logging is enabled
+    wandb = None
 
 
 DEFAULT_MODEL = "gpt-image-2"
@@ -658,6 +661,10 @@ def main():
     print("Edited images saved:")
     for op, plan in per_op_plan.items():
         print(f"  - [{op}] {plan['output_dir']}/")
+
+    if not args.no_wandb and wandb is None:
+
+        raise SystemExit("W&B logging requested but wandb is not installed — pip install wandb, or pass --no_wandb.")
 
     if not args.no_wandb:
         upload_to_wandb(args, per_op_plan, total_tasks, total_success, total_fail)

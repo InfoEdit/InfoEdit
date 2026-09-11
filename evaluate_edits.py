@@ -10,7 +10,10 @@ from datetime import datetime
 from tqdm import tqdm
 from PIL import Image
 from google import genai
-import wandb
+try:
+    import wandb
+except ImportError:   # optional: only needed when W&B logging is enabled
+    wandb = None
 
 DEFAULT_MODEL_PATH = "gemini-3.1-flash-lite-preview"
 
@@ -1716,6 +1719,10 @@ def main():
             print(f"[Overall] {m}_rate: {grand_sub_success[m] / grand_sub_total[m]:.4f} ({grand_sub_success[m]}/{grand_sub_total[m]})")
         else:
             print(f"[Overall] {m}_rate: n/a (0/0)")
+
+    if not args.no_wandb and wandb is None:
+
+        raise SystemExit("W&B logging requested but wandb is not installed — pip install wandb, or pass --no_wandb.")
 
     if not args.no_wandb:
         upload_to_wandb(args, per_op_plan, total_tasks, grand_success, grand_fail, grand_skip)
