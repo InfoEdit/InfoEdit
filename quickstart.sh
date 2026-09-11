@@ -8,7 +8,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-export MODEL="${MODEL:-gemini-3.5-flash}"   # a text model: this branch rewrites source
+export MODEL="${MODEL:-gpt-5.6-sol}"   # a text model: this branch rewrites source
 export TASK="${TASK:-text_expand}"
 export SOURCE="${SOURCE:-html}"
 export LIMIT="${LIMIT:-5}"

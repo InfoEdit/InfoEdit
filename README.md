@@ -81,12 +81,12 @@ Gateways usually gate models per key, and a model that appears in `/models` is
 not necessarily one you are allowed to call. Probe it first:
 
 ```bash
-python llm_client.py --probe gemini-3.5-flash
+python llm_client.py --probe gpt-5.6-sol
 ```
 
 ```
 proxy : OpenAI-compatible proxy at https://your-gateway/v1
-model : gemini-3.5-flash
+model : gpt-5.6-sol
 
   text         ✅  'ok'
   image input  ✅  'red'  -> usable as a judge
@@ -107,13 +107,24 @@ cover that model — ask whoever runs the gateway, or pick another model.
 ### Which model goes where
 
 ```bash
-export MODEL=gemini-3.5-flash          # the editor, rewrites the source
+export MODEL=gpt-5.6-sol               # the editor, rewrites the source
 export JUDGE=gemini-3.1-pro-preview    # scores the result, needs image input
 ```
 
 `MODEL` only has to handle text (and images too, if you use `PATHWAY=code_image`).
 `JUDGE` must pass the **image input** probe, since judging means looking at the
 before and after renders. Probe both.
+
+### Models used in our runs
+
+| role | model | why |
+|---|---|---|
+| editor | `gpt-5.6-sol` | text model, rewrites the source |
+| editor | `claude-opus-5` | text model, rewrites the source |
+| judge | `gemini-3.1-pro-preview` | same judge as the paper; accepts image input |
+
+Image models such as `gemini-2.5-flash-image` do **not** belong here — this branch
+never asks a model to draw, only to rewrite source. Those live on `main`.
 
 ## Get the benchmark
 
@@ -142,18 +153,18 @@ Then the real thing, two steps per model:
 
 ```bash
 # 1. produce edits
-MODEL=gemini-3.5-flash TASK=add bash run_edit.sh
+MODEL=gpt-5.6-sol TASK=add bash run_edit.sh
 
 # 2. score them (Edit Compliance, Content Preservation, Success Rate)
-MODEL=gemini-3.5-flash TASK=add bash run_eval.sh
+MODEL=gpt-5.6-sol TASK=add bash run_eval.sh
 ```
 
 `run_eval.sh` prints the EC / CP / SR table at the end. The files it worked from, for
-`MODEL=gemini-3.5-flash TASK=add` on HTML:
+`MODEL=gpt-5.6-sol TASK=add` on HTML:
 
 ```
-edited_html_infographics_code/v17/gemini-3.5-flash_code/add/   edited source + render
-eval_results/gemini-3.5-flash_code/                            per-example judgements
+edited_html_infographics_code/v17/gpt-5.6-sol_code/add/   edited source + render
+eval_results/gpt-5.6-sol_code/                            per-example judgements
 ```
 
 Note the `_code` suffix on both the directory and the model name — it keeps `code` and
@@ -174,8 +185,8 @@ Both pathways use a **text** model — they rewrite source, they do not draw pix
 
 | PATHWAY | what it does | example MODEL |
 |---|---|---|
-| `code` | rewrites the HTML/PPTX source from the source alone | `gemini-3.5-flash` |
-| `code_image` | same, but also shows the model the rendered original | `gemini-3.5-flash` |
+| `code` | rewrites the HTML/PPTX source from the source alone | `gpt-5.6-sol` |
+| `code_image` | same, but also shows the model the rendered original | `claude-opus-5` |
 
 `code_image` needs a model that accepts image input — check with
 `python llm_client.py --probe MODEL`. Task names map to the

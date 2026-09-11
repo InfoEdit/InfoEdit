@@ -8,7 +8,7 @@ set -euo pipefail
 SOURCE="${SOURCE:-html}"        # html | ppt
 TASK="${TASK:-text_expand}"     # text_expand | add | swap_inter | aspect_ratio
 PATHWAY="${PATHWAY:-code}"      # code | code_image  (pixel pathways are Vertex-only)
-MODEL="${MODEL:?set MODEL, e.g. MODEL=gemini-2.5-flash-image}"
+MODEL="${MODEL:?set MODEL, e.g. MODEL=gpt-5.6-sol}"
 JUDGE="${JUDGE:-gemini-3.1-pro-preview}"
 LIMIT="${LIMIT:-}"
 WORKERS="${WORKERS:-8}"        # online calls: keep well under the proxy rate limit
