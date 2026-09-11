@@ -19,8 +19,8 @@ case "$SOURCE" in
 esac
 if [ ! -f "data/editing_prompts_${SOURCE}/${VERSION}.${TASK}.jsonl" ]; then
   echo "Benchmark data not found: data/editing_prompts_${SOURCE}/${VERSION}.${TASK}.jsonl"
-  echo "Download the dataset first (see README > Data) so that"
-  echo "  data/editing_prompts_${SOURCE}/  and  data/${SOURCE}_infographics/${VERSION}/  exist here."
+  echo "Fetch the benchmark first:"
+  echo "  huggingface-cli download InfoEdit/InfoEdit --repo-type dataset --local-dir data"
   exit 1
 fi
 

@@ -76,6 +76,14 @@ source env.sh
 huggingface-cli download InfoEdit/InfoEdit --repo-type dataset --local-dir data
 ```
 
+Newer `huggingface_hub` releases rename that command to `hf download ...`. If neither is
+on your PATH, the Python API does the same thing:
+
+```bash
+python -c "from huggingface_hub import snapshot_download; \
+snapshot_download('InfoEdit/InfoEdit', repo_type='dataset', local_dir='data')"
+```
+
 ## Run it
 
 ```bash
@@ -103,15 +111,25 @@ Both scripts read the same environment variables:
 
 | var | values | default |
 |---|---|---|
-| `MODEL` | editor model id, e.g. `gemini-2.5-flash-image`, `gemini-3.5-flash` | *required* |
+| `MODEL` | editor model id — must match `PATHWAY` (see below) | *required* |
 | `TASK` | `text_expand` · `add` · `swap_inter` · `aspect_ratio` | `text_expand` |
 | `SOURCE` | `html` (800) · `ppt` (200) | `html` |
 | `PATHWAY` | `image` · `code` · `code_image` · `gpt` · `seedream` | `image` |
 | `LIMIT` | number of examples, empty = all | all |
 | `JUDGE` | judge model | `gemini-3.1-pro-preview` |
 
-`PATHWAY=image` uses Gemini image models; `code` / `code_image` edit the HTML or PPTX
-source (`code_image` also shows the model the rendered original). Task names map to the
+`MODEL` and `PATHWAY` have to agree, because the two pathways call different kinds of
+model:
+
+| PATHWAY | what it does | example MODEL |
+|---|---|---|
+| `image` | edits the rendered PNG with a Gemini **image** model | `gemini-2.5-flash-image` |
+| `code` | rewrites the HTML/PPTX source with a **text** model | `gemini-3.5-flash` |
+| `code_image` | same, but also shows the model the rendered original | `gemini-3.5-flash` |
+| `gpt` | GPT-Image-2 (needs `OPENAI_API_KEY`) | `gpt-image-2` |
+| `seedream` | Seedream (needs `ARK_API_KEY`) | `doubao-seedream-5-0-260128` |
+
+Passing a text model with `PATHWAY=image` (or vice versa) will fail. Task names map to the
 paper as: `text_expand`→Expand-Text, `add`→Insert-Element, `swap_inter`→Swap-Block,
 `aspect_ratio`→Reshape-Canvas.
 
