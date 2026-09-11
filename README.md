@@ -170,6 +170,40 @@ eval_results/gpt-5.6-sol_code/                            per-example judgements
 Note the `_code` suffix on both the directory and the model name — it keeps `code` and
 `code_image` runs of the same model apart.
 
+### Running half the benchmark
+
+`LIMIT` takes the first N records of the task's file, so half of each source is:
+
+```bash
+# HTML — first 400 of 800
+MODEL=gpt-5.6-sol TASK=add SOURCE=html LIMIT=400 bash run_edit.sh
+MODEL=gpt-5.6-sol TASK=add SOURCE=html LIMIT=400 bash run_eval.sh
+
+# PPT — first 100 of 200
+MODEL=gpt-5.6-sol TASK=add SOURCE=ppt  LIMIT=100 bash run_edit.sh
+MODEL=gpt-5.6-sol TASK=add SOURCE=ppt  LIMIT=100 bash run_eval.sh
+```
+
+The subset is deterministic: records are read in file order, and the ids run 1..N,
+so `LIMIT=400` is exactly ids 1–400 every time, for every task and every model.
+
+**Pass the same `LIMIT` to both steps.** `run_edit.sh` and `run_eval.sh` each slice
+independently, so a mismatch means the judge looks for edits that were never produced
+and records them as skips.
+
+To sweep all four tasks:
+
+```bash
+for TASK in text_expand add swap_inter aspect_ratio; do
+  MODEL=gpt-5.6-sol TASK=$TASK SOURCE=html LIMIT=400 bash run_edit.sh
+  MODEL=gpt-5.6-sol TASK=$TASK SOURCE=html LIMIT=400 bash run_eval.sh
+done
+```
+
+Numbers from a half run are not comparable with the paper's tables, which use all
+800 HTML and 200 PPT items — but they are comparable **across models**, as long as
+every model gets the same `LIMIT`.
+
 Both scripts read the same environment variables:
 
 | var | values | default |
@@ -178,7 +212,7 @@ Both scripts read the same environment variables:
 | `TASK` | `text_expand` · `add` · `swap_inter` · `aspect_ratio` | `text_expand` |
 | `SOURCE` | `html` (800) · `ppt` (200) | `html` |
 | `PATHWAY` | `code` · `code_image` | `code` |
-| `LIMIT` | number of examples, empty = all | all |
+| `LIMIT` | first N records; empty = all (800 HTML / 200 PPT) | all |
 | `JUDGE` | judge model | `gemini-3.1-pro-preview` |
 
 Both pathways use a **text** model — they rewrite source, they do not draw pixels:
