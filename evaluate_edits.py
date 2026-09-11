@@ -1577,7 +1577,7 @@ def main():
         print(f"Poll Interval: {args.batch_poll_interval}s")
     else:
         print(f"Num Workers:  {args.num_workers}")
-        print(f"API Keys:     {len(args.api_keys) if args.api_keys else 0}")
+        print(f"Proxy:        {os.environ.get('OPENAI_BASE_URL', '(OPENAI_BASE_URL unset)')}")
     print("-" * 50)
 
     if args.dry_run:
@@ -1596,9 +1596,6 @@ def main():
         if not args.batch_bucket_uri:
             print("Error: --use_batch requires --batch_bucket_uri (e.g. gs://my-bucket)")
             return
-    elif not args.api_keys:
-        print("Error: --api_keys is required")
-        return
 
     total_success = 0
     total_fail = 0

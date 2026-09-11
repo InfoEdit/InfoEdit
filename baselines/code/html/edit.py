@@ -875,7 +875,7 @@ def main():
         print(f"Bucket URI:    {args.batch_bucket_uri}")
     elif not args.render_only:
         print(f"Num Workers: {args.num_workers}")
-        print(f"API Keys:    {len(args.api_keys) if args.api_keys else 0}")
+        print(f"Proxy:        {os.environ.get('OPENAI_BASE_URL', '(OPENAI_BASE_URL unset)')}")
     print(f"Render workers: {args.num_render_workers} (skip_render={args.skip_render})")
     print("-" * 50)
 
@@ -893,9 +893,6 @@ def main():
             if not args.gcp_project or not args.batch_bucket_uri:
                 print("Error: --use_batch requires --gcp_project and --batch_bucket_uri")
                 return
-        elif not args.api_keys:
-            print("Error: --api_keys is required for online mode")
-            return
 
     total_success = 0
     total_fail = 0
