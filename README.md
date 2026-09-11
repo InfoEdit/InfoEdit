@@ -47,21 +47,73 @@ playwright install chromium        # HTML path renders with Chromium
 
 ## Configure the proxy
 
+Everything this branch needs is two variables:
+
 ```bash
-cp env.example.sh env.sh    # set OPENAI_API_KEY and OPENAI_BASE_URL
+cp env.example.sh env.sh
+```
+
+Edit `env.sh`:
+
+```bash
+export OPENAI_API_KEY=sk-...                         # the key your gateway issued
+export OPENAI_BASE_URL=https://your-gateway/v1       # note the /v1 suffix
+```
+
+Then load them into your shell — every command below assumes you have:
+
+```bash
 source env.sh
 ```
 
-Check that the model you plan to use actually works on your key — gateways often
-gate models per key, and a model that lists is not necessarily a model you can call:
+Two things that commonly go wrong:
+
+* **`OPENAI_BASE_URL` must end in `/v1`** (or whatever prefix your gateway
+  mounts the OpenAI routes under). Pointing at the bare host gives 404s on
+  every call.
+* **The variables have to be exported**, not just set — the Python scripts read
+  them from the environment. `source env.sh` does this; running `bash env.sh`
+  does not.
+
+### Check your key before a long run
+
+Gateways usually gate models per key, and a model that appears in `/models` is
+not necessarily one you are allowed to call. Probe it first:
 
 ```bash
 python llm_client.py --probe gemini-3.5-flash
 ```
 
-It reports three things: **text** (needed to edit), **image input** (needed to
-judge) and **JSON mode**. A model that fails image input can still be an editor,
-just not the judge.
+```
+proxy : OpenAI-compatible proxy at https://your-gateway/v1
+model : gemini-3.5-flash
+
+  text         ✅  'ok'
+  image input  ✅  'red'  -> usable as a judge
+  json mode    ✅  '{"ok": true}'
+```
+
+The three lines answer three different questions:
+
+| line | if it fails |
+|---|---|
+| **text** | the model is unusable on this key — nothing else will work |
+| **image input** | still fine as an *editor*, but it cannot be the *judge*, which compares the original and edited images |
+| **json mode** | harmless — the judge never asks for JSON mode; it parses the reply and strips a ``` fence if one is there |
+
+A 403 like `user not allowed to access model` means the key's tier does not
+cover that model — ask whoever runs the gateway, or pick another model.
+
+### Which model goes where
+
+```bash
+export MODEL=gemini-3.5-flash          # the editor, rewrites the source
+export JUDGE=gemini-3.1-pro-preview    # scores the result, needs image input
+```
+
+`MODEL` only has to handle text (and images too, if you use `PATHWAY=code_image`).
+`JUDGE` must pass the **image input** probe, since judging means looking at the
+before and after renders. Probe both.
 
 ## Get the benchmark
 
