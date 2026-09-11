@@ -32,6 +32,10 @@ case "$PATHWAY" in
     # HTML edits the HTML source; PPT edits the slide via python-pptx.
     if [ "$SOURCE" = "ppt" ]; then
       EDITOR=baselines/code/ppt/edit.py
+      # The PPT editor rebuilds each slide from the master deck, so it needs
+      # the deck itself plus the id -> slide-index mapping.
+      EXTRA_EDIT_ARGS+=(--master_pptx "data/ppt_infographics/${VERSION}/tempates_gallery_0430.pptx"
+                        --id_mapping_csv "data/ppt_infographics/${VERSION}/id_mapping.csv")
     else
       EDITOR=baselines/code/html/edit.py
     fi
