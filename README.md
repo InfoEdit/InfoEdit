@@ -6,7 +6,7 @@ Cheng Yang<sup>1,\*</sup>, Chufan Shi<sup>2,\*</sup>, Huijuan Wang<sup>2,\*</sup
 
 <sup>1</sup>UC San Diego &nbsp; <sup>2</sup>USC &nbsp; <sup>3</sup>UIUC &nbsp; <sup>4</sup>CMU &nbsp;&nbsp; <sup>\*</sup>Equal contribution
 
-[Project page](https://infoedit.github.io) · Paper (soon) · Dataset (soon)
+[Project page](https://infoedit.github.io) · [Dataset](https://huggingface.co/datasets/InfoEdit/InfoEdit) · Paper (soon)
 
 ---
 
@@ -99,10 +99,12 @@ python evaluate_edits.py \
     --use_batch --gcp_project "$GCP_PROJECT" \
     --gcp_location "$GCP_LOCATION" --batch_bucket_uri "$BATCH_BUCKET_URI"
 
-python summarize_eval.py eval_results/my-model
+python summarize_eval.py v17 --model my-model --prefix html --ops add
 ```
 
-Edited files must keep the original stem, e.g. `edited_html_infographics/v17/my-model/add/1_edited.png`.
+Lay the edits out as `<edited_dir>/<task>/{id}_edited_1.png` — for the command above that
+is `edited_html_infographics/v17/my-model/add/1_edited_1.png`. The `{id}` must match the
+`id` in the prompt record, and `_1` is the variant index.
 
 ## Repository layout
 
@@ -121,8 +123,8 @@ baselines/                  editor backends, grouped by the two pathways the
     gemini/                     Gemini image models (default)
     gpt/                        GPT-Image-2
     seedream/                   Seedream
-    qwen/                       local Qwen-Image-Edit
-    hunyuan/                    local HunyuanImage
+    qwen/                       local Qwen-Image-Edit   (run.sh, not a PATHWAY)
+    hunyuan/                    local HunyuanImage      (run.sh, not a PATHWAY)
   code/                       edit the source, then re-render
     html/                       HTML source
     ppt/                        PPTX source
