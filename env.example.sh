@@ -1,19 +1,13 @@
 # Copy to env.sh and fill in your own values, then: source env.sh
 #
-# Vertex AI project that will run Gemini batch prediction jobs.
-export GCP_PROJECT=YOUR_GCP_PROJECT_ID
+# This branch reaches every model through an OpenAI-compatible proxy, so the
+# whole configuration is two variables — no GCP project, no staging bucket.
 
-# Vertex AI endpoint location. "global" is recommended; some models are
-# region-restricted, in which case use e.g. us-central1.
-export GCP_LOCATION=global
+# Key issued by the proxy.
+export OPENAI_API_KEY=YOUR_PROXY_KEY
 
-# GCS bucket used to stage batch input/output. Must be a SINGLE region
-# (us-central1), not the multi-region "us".
-#   gcloud storage buckets create gs://${GCP_PROJECT}-batch-io --location=us-central1
-export BATCH_BUCKET_URI=gs://${GCP_PROJECT}-batch-io
+# Proxy endpoint, including the /v1 suffix.
+export OPENAI_BASE_URL=https://your-proxy.example.com/v1
 
-# Optional, per backend:
-#   GPT-Image-2 (baselines/pixel/gpt)
-# export OPENAI_API_KEY=sk-...
-#   Seedream via Volcengine Ark (baselines/pixel/seedream)
-# export ARK_API_KEY=...
+# Check a model before a long run — reports text / image-input / JSON support:
+#   python llm_client.py --probe gemini-3.5-flash

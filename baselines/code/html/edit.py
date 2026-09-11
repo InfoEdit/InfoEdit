@@ -798,6 +798,13 @@ def parse_args():
 def main():
     args = parse_args()
 
+    if getattr(args, "use_batch", False):
+        raise SystemExit(
+            "--use_batch is a Vertex AI feature and is not available on the "
+            "openai-proxy branch. Drop --use_batch and raise --num_workers "
+            "instead; requests then go to the proxy concurrently."
+        )
+
     operations = list(OPERATIONS) if args.operation == "all" else [args.operation]
 
     per_op_plan = {}
@@ -863,11 +870,6 @@ def main():
         print(f"  - [{op}] {len(plan['data'])} tasks | in={plan['input_file']} | out={plan['output_dir']}/")
     print(f"Variants:    {NUM_VARIANTS}")
     if args.use_batch and not args.render_only:
-        raise SystemExit(
-            "--use_batch is a Vertex AI feature and is not available on the "
-            "openai-proxy branch. Drop --use_batch and raise --num_workers "
-            "instead; requests then go to the proxy concurrently."
-        )
         print(f"GCP Project:   {args.gcp_project}")
         print(f"GCP Location:  {args.gcp_location}")
         print(f"Bucket URI:    {args.batch_bucket_uri}")

@@ -16,10 +16,6 @@ python evaluate_edits.py \
     --model_path "$JUDGE" \
     --operation "$TASK" \
     --num_workers "$WORKERS" \
-    --use_batch \
-    --gcp_project "$GCP_PROJECT" \
-    --gcp_location "$GCP_LOCATION" \
-    --batch_bucket_uri "$BATCH_BUCKET_URI" \
     --no_wandb \
     --detailed \
     ${LIMIT_ARGS[@]+"${LIMIT_ARGS[@]}"}

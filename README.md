@@ -10,6 +10,12 @@ Cheng Yang<sup>1,\*</sup>, Chufan Shi<sup>2,\*</sup>, Huijuan Wang<sup>2,\*</sup
 
 ---
 
+> **Branch: `openai-proxy`.** Models are reached through an OpenAI-compatible
+> gateway instead of Vertex AI, so setup is two environment variables and no GCP
+> project. This covers the **code-level** experiments (Table 3); pixel-level
+> editing needs a model that returns images, which the chat-completions API does
+> not express — use `main` for that.
+
 Editing an infographic is not like editing a photo. Infographics encode information
 through **logical relations**, so changing one element forces the surrounding elements to
 adapt. We call this global layout reasoning ability **reflow**, and InfoEdit measures it.
@@ -22,53 +28,40 @@ rate and the best code-level system **61.6%**; most editors fall below **7%**.
 ## What you need first
 
 * **Python 3.10+**
-* **A Google Cloud project with billing enabled.** Editing and judging both run as
-  [Vertex AI batch prediction](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/batch-prediction)
-  jobs — roughly half the price of online calls, but they do require a real GCP project.
-* **The `gcloud` CLI** ([install](https://cloud.google.com/sdk/docs/install)).
-
-Optional, per backend:
-
-| you want to run | you also need |
-|---|---|
-| code-level on HTML | `playwright install chromium` |
-| code-level on PPT | LibreOffice **and** poppler |
-| GPT-Image-2 | `OPENAI_API_KEY` |
-| Seedream | `ARK_API_KEY` (Volcengine) |
-| Qwen / Hunyuan | a CUDA GPU box; see `baselines/pixel/{qwen,hunyuan}/run.sh` |
+* **Access to an OpenAI-compatible LLM proxy** — a key and a base URL. Any gateway
+  that speaks `chat.completions` works (LiteLLM, an internal gateway, even
+  OpenAI itself).
+* For the PPT path only: LibreOffice and poppler.
 
 ## Install
 
 ```bash
-git clone https://github.com/InfoEdit/InfoEdit.git && cd InfoEdit
+git clone -b openai-proxy https://github.com/InfoEdit/InfoEdit.git && cd InfoEdit
 pip install -r requirements.txt
-playwright install chromium        # HTML code-level path renders with Chromium
+playwright install chromium        # HTML path renders with Chromium
 
-# only for the PPT code-level path:
+# only for the PPT path:
 #   macOS          brew install --cask libreoffice poppler
 #   Debian/Ubuntu  apt-get install libreoffice poppler-utils
 ```
 
-## Configure Google Cloud
+## Configure the proxy
 
 ```bash
-export GCP_PROJECT=your-project-id
-
-# 1. authenticate (this is what the Python SDK uses)
-gcloud auth application-default login
-gcloud auth application-default set-quota-project $GCP_PROJECT
-
-# 2. enable the APIs
-gcloud services enable aiplatform.googleapis.com storage.googleapis.com --project $GCP_PROJECT
-
-# 3. create the staging bucket batch jobs read and write through.
-#    It must be a SINGLE region (us-central1), not the multi-region "us".
-gcloud storage buckets create gs://${GCP_PROJECT}-batch-io --location=us-central1
-
-# 4. record it for the run scripts
-cp env.example.sh env.sh     # set GCP_PROJECT inside
+cp env.example.sh env.sh    # set OPENAI_API_KEY and OPENAI_BASE_URL
 source env.sh
 ```
+
+Check that the model you plan to use actually works on your key — gateways often
+gate models per key, and a model that lists is not necessarily a model you can call:
+
+```bash
+python llm_client.py --probe gemini-3.5-flash
+```
+
+It reports three things: **text** (needed to edit), **image input** (needed to
+judge) and **JSON mode**. A model that fails image input can still be an editor,
+just not the judge.
 
 ## Get the benchmark
 
@@ -90,17 +83,17 @@ snapshot_download('InfoEdit/InfoEdit', repo_type='dataset', local_dir='data')"
 bash quickstart.sh      # 5 examples, edit + score, end to end
 ```
 
-Batch jobs sit in a queue before they start, so even five examples usually take a few
-minutes — a run that prints `JOB_STATE_QUEUED` for a while is working, not stuck.
+Calls go to the proxy directly, `--num_workers` at a time (default 8). Raise `WORKERS`
+if your key allows more concurrency.
 
 Then the real thing, two steps per model:
 
 ```bash
 # 1. produce edits
-MODEL=gemini-2.5-flash-image TASK=add bash run_edit.sh
+MODEL=gemini-3.5-flash TASK=add bash run_edit.sh
 
 # 2. score them (Edit Compliance, Content Preservation, Success Rate)
-MODEL=gemini-2.5-flash-image TASK=add bash run_eval.sh
+MODEL=gemini-3.5-flash TASK=add bash run_eval.sh
 ```
 
 Edits land in `edited_<source>_infographics[_code]/<version>/<model>/<task>/`, per-example
@@ -114,22 +107,19 @@ Both scripts read the same environment variables:
 | `MODEL` | editor model id — must match `PATHWAY` (see below) | *required* |
 | `TASK` | `text_expand` · `add` · `swap_inter` · `aspect_ratio` | `text_expand` |
 | `SOURCE` | `html` (800) · `ppt` (200) | `html` |
-| `PATHWAY` | `image` · `code` · `code_image` · `gpt` · `seedream` | `image` |
+| `PATHWAY` | `code` · `code_image` | `code` |
 | `LIMIT` | number of examples, empty = all | all |
 | `JUDGE` | judge model | `gemini-3.1-pro-preview` |
 
-`MODEL` and `PATHWAY` have to agree, because the two pathways call different kinds of
-model:
+Both pathways use a **text** model — they rewrite source, they do not draw pixels:
 
 | PATHWAY | what it does | example MODEL |
 |---|---|---|
-| `image` | edits the rendered PNG with a Gemini **image** model | `gemini-2.5-flash-image` |
-| `code` | rewrites the HTML/PPTX source with a **text** model | `gemini-3.5-flash` |
+| `code` | rewrites the HTML/PPTX source from the source alone | `gemini-3.5-flash` |
 | `code_image` | same, but also shows the model the rendered original | `gemini-3.5-flash` |
-| `gpt` | GPT-Image-2 (needs `OPENAI_API_KEY`) | `gpt-image-2` |
-| `seedream` | Seedream (needs `ARK_API_KEY`) | `doubao-seedream-5-0-260128` |
 
-Passing a text model with `PATHWAY=image` (or vice versa) will fail. Task names map to the
+`code_image` needs a model that accepts image input — check with
+`python llm_client.py --probe MODEL`. Task names map to the
 paper as: `text_expand`→Expand-Text, `add`→Insert-Element, `swap_inter`→Swap-Block,
 `aspect_ratio`→Reshape-Canvas.
 
@@ -160,9 +150,7 @@ python evaluate_edits.py \
     --edited_dir  edited_html_infographics/v17/my-model \
     --output_file eval_results/my-model/html_v17.jsonl \
     --operation add --detailed \
-    --model_path gemini-3.1-pro-preview \
-    --use_batch --gcp_project "$GCP_PROJECT" \
-    --gcp_location "$GCP_LOCATION" --batch_bucket_uri "$BATCH_BUCKET_URI"
+    --model_path gemini-3.5-flash --num_workers 8
 
 python summarize_eval.py v17 --model my-model --prefix html --ops add
 ```
@@ -179,28 +167,17 @@ quickstart.sh               end-to-end smoke test
 evaluate_edits.py           the reflow-aware MLLM judge
 summarize_eval.py           print EC / CP / SR from a results directory
 
-baselines/                  editor backends, grouped by the two pathways the
-                            paper compares. Each backend is a folder with an
-                            edit.py, plus recover_batch.py where the backend
-                            runs as a resumable batch job:
+llm_client.py               the one place the proxy is called
 
-  pixel/                      edit the rendered image  (main tables)
-    gemini/                     Gemini image models (default)
-    gpt/                        GPT-Image-2
-    seedream/                   Seedream
-    qwen/                       local Qwen-Image-Edit   (run.sh, not a PATHWAY)
-    hunyuan/                    local HunyuanImage      (run.sh, not a PATHWAY)
-  code/                       edit the source, then re-render
-    html/                       HTML source
-    ppt/                        PPTX source
+baselines/code/             the pathways this branch supports
+    html/                     rewrites the HTML source, re-renders with Chromium
+    ppt/                      rewrites the slide via python-pptx, renders via LibreOffice
 
-  recover_batch_evaluate.py   resume an interrupted judging job
-  show_jobs.sh                list Vertex AI batch jobs
+baselines/pixel/            Vertex-only, unported — see the main branch
 ```
 
-This release covers the two experiments reported in the main tables: **pixel-level**
-editing (Table 2) and **code-level** editing (Table 3). The dataset itself is
-distributed via HuggingFace, so no dataset-construction code is included.
+This branch covers **code-level** editing (Table 3). The dataset is distributed via
+HuggingFace, so no dataset-construction code is included.
 
 ## License
 

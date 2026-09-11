@@ -18,10 +18,6 @@ python "$EDITOR" \
     --model_path "$MODEL" \
     --operation "$TASK" \
     --num_workers "$WORKERS" \
-    --use_batch \
-    --gcp_project "$GCP_PROJECT" \
-    --gcp_location "$GCP_LOCATION" \
-    --batch_bucket_uri "$BATCH_BUCKET_URI" \
     --no_wandb \
     ${LIMIT_ARGS[@]+"${LIMIT_ARGS[@]}"} ${EXTRA_EDIT_ARGS[@]+"${EXTRA_EDIT_ARGS[@]}"}
 

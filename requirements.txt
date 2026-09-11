@@ -1,12 +1,10 @@
-# Gemini / Vertex AI batch prediction — the default editor and the judge
-google-genai>=1.0.0
-google-cloud-aiplatform>=1.60.0
-google-cloud-storage>=2.14.0
-gcsfs>=2024.2.0
+# All models are reached through one OpenAI-compatible proxy
+openai>=1.40.0
 
 # Downloading the benchmark from the Hugging Face Hub
 huggingface_hub>=0.26
 
+pillow
 tqdm
 
 # Rendering edited HTML back to PNG (code-level, HTML)
@@ -15,6 +13,3 @@ playwright>=1.40.0
 # Editing and rendering PPTX slides (code-level, PPT)
 python-pptx>=0.6.23
 pdf2image
-
-# Only for the GPT-Image-2 backend
-openai>=1.40.0
