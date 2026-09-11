@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Step 1 — run an editor over InfoEdit and write edited infographics.
 #
-#   MODEL=gemini-2.5-flash-image TASK=add bash run_edit.sh
+#   MODEL=gpt-5.6-sol TASK=add bash run_edit.sh
 #
 # Environment variables (all optional except MODEL):
-#   MODEL    editor model id                                  (required)
+#   MODEL    editor model id, a text model                    (required)
 #   TASK     text_expand | add | swap_inter | aspect_ratio     (default text_expand)
 #   SOURCE   html | ppt                                        (default html)
-#   PATHWAY  image | code | code_image | gpt | seedream        (default image)
+#   PATHWAY  code | code_image                                (default code)
 #   LIMIT    number of examples; empty = all                   (default all)
 cd "$(dirname "$0")"
 source ./_common.sh

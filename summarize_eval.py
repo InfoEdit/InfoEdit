@@ -11,7 +11,7 @@ Usage:
       [--model MODEL] [--prefix html|ppt] [--ops text_expand,add,swap_inter,aspect_ratio]
 
 Examples:
-  python summarize_eval.py v17 --model gemini-2.5-flash-image
+  python summarize_eval.py v17 --model gpt-5.6-sol_code
   python summarize_eval.py v17_cn
   python summarize_eval.py v17 v17_cn          # baseline vs Chinese pilot
 """
