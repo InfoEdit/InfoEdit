@@ -148,15 +148,22 @@ MODEL=gemini-3.5-flash TASK=add bash run_edit.sh
 MODEL=gemini-3.5-flash TASK=add bash run_eval.sh
 ```
 
-Edits land in `edited_<source>_infographics[_code]/<version>/<model>/<task>/`, per-example
-judgements in `eval_results/<model>/`, and `run_eval.sh` prints the EC / CP / SR table at
-the end.
+`run_eval.sh` prints the EC / CP / SR table at the end. The files it worked from, for
+`MODEL=gemini-3.5-flash TASK=add` on HTML:
+
+```
+edited_html_infographics_code/v17/gemini-3.5-flash_code/add/   edited source + render
+eval_results/gemini-3.5-flash_code/                            per-example judgements
+```
+
+Note the `_code` suffix on both the directory and the model name — it keeps `code` and
+`code_image` runs of the same model apart.
 
 Both scripts read the same environment variables:
 
 | var | values | default |
 |---|---|---|
-| `MODEL` | editor model id — must match `PATHWAY` (see below) | *required* |
+| `MODEL` | editor model id (a **text** model) | *required* |
 | `TASK` | `text_expand` · `add` · `swap_inter` · `aspect_ratio` | `text_expand` |
 | `SOURCE` | `html` (800) · `ppt` (200) | `html` |
 | `PATHWAY` | `code` · `code_image` | `code` |
@@ -202,7 +209,7 @@ python evaluate_edits.py \
     --edited_dir  edited_html_infographics/v17/my-model \
     --output_file eval_results/my-model/html_v17.jsonl \
     --operation add --detailed \
-    --model_path gemini-3.5-flash --num_workers 8
+    --model_path gemini-3.1-pro-preview --num_workers 8   # the judge: needs image input
 
 python summarize_eval.py v17 --model my-model --prefix html --ops add
 ```
