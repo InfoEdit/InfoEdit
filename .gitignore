@@ -1,0 +1,49 @@
+# ============================================================
+# Benchmark data — distributed via HuggingFace Datasets, not git
+# ============================================================
+data/
+
+# Model outputs / experiment artifacts
+edited_html_infographics*/
+edited_ppt_infographics*/
+eval_results/
+*.zip
+batch_image_edit_output/
+augmented_data/
+logs/
+tmp/
+
+# Internal working files — not part of the release
+TODO.md
+render_saved_edits.sh
+promo_video/
+judge_calib/
+font_replace/
+eval_results_*/
+from_mac/
+to_mac/
+*.tar.gz
+.cache/
+
+# Fonts downloaded for PPT rendering (see README); only fonts.conf is tracked
+fonts/*
+!fonts/fonts.conf
+
+# Local credentials / per-machine environment
+env.sh
+env_*.sh
+.env
+*.key
+service-account*.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
