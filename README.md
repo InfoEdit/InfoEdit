@@ -6,6 +6,7 @@
 
 <div align="center">
 
+![EMNLP 2026](https://img.shields.io/badge/EMNLP-2026-2a2f6c.svg)
 ![Data License](https://img.shields.io/badge/Data%20License-CC%20BY%204.0-blue.svg)
 ![Code License](https://img.shields.io/badge/Code%20License-MIT-blue.svg)
 ![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)
@@ -19,6 +20,7 @@
 
 ## 🎉 What's New
 
+- **[2026.10.28]** 🎉 InfoEdit has been accepted to the **EMNLP 2026 Main Conference**!
 - **[2026.09.29]** 🔧 Code and data are released.
 - **[2026.09.27]** 📣 The InfoEdit paper is on [arXiv](https://arxiv.org/abs/2609.33286).
 
